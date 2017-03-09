@@ -25,6 +25,7 @@ from django.core import files
 from geonode.base.models import ResourceBase, TopicCategory
 from geonode.layers.models import Layer
 
+
 class Exportable(object):
     EXPORT_FIELDS = []
 
@@ -44,9 +45,10 @@ class Exportable(object):
             out[fname] = val
         return out
 
+
 class LocationAware(object):
 
-    # hack to set location context, so we can return 
+    # hack to set location context, so we can return
     # location-specific related objects
     def set_location(self, loc):
         self._location = loc
@@ -57,6 +59,7 @@ class LocationAware(object):
             raise ValueError("Cannot use location-less {} here".format(self.__class__.__name__))
         return self._location
 
+
 class HazardTypeAware(object):
     def set_hazard_type(self, ht):
         self._hazard_type = ht
@@ -66,6 +69,7 @@ class HazardTypeAware(object):
         if not getattr(self, '_hazard_type', None):
             raise ValueError("Cannot use hazard-type-less {} here".format(self.__class__.__name__))
         return self._hazard_type
+
 
 class AnalysisTypeAware(object):
 
@@ -88,7 +92,7 @@ class RiskAnalysisAware(object):
         if not getattr(self, '_risk_analysis', None):
             raise ValueError("Cannot use analysis-type-less {} here".format(self.__class__.__name__))
         return self._risk_analysis
-    
+
 
 class AnalysisType(HazardTypeAware, LocationAware, Exportable, models.Model):
     """
@@ -123,14 +127,14 @@ class AnalysisType(HazardTypeAware, LocationAware, Exportable, models.Model):
     def get_risk_analysis_list(self, **kwargs):
         loc = self.get_location()
         ht = self.get_hazard_type().set_location(loc)
-        ra = self.riskanalysis_analysistype.filter(hazard_type=ht, 
-                                      administrative_divisions__in=[loc])
+        ra = self.riskanalysis_analysistype.filter(hazard_type=ht,
+                                                   administrative_divisions__in=[loc])
         if kwargs:
             ra = ra.filter(**kwargs)
-        risk_analysis = [ r.set_location(loc)\
-                           .set_hazard_type(ht)\
-                           .set_analysis_type(self)\
-                           for r in ra.distinct()]
+        risk_analysis = [r.set_location(loc)
+                          .set_hazard_type(ht)
+                          .set_analysis_type(self)
+                         for r in ra.distinct()]
         return risk_analysis
 
     def get_analysis_details(self):
@@ -138,6 +142,7 @@ class AnalysisType(HazardTypeAware, LocationAware, Exportable, models.Model):
         out = self.export()
         out['riskAnalysis'] = [ra.export() for ra in risk_analysis]
         return out
+
 
 class HazardType(LocationAware, Exportable, models.Model):
     """
@@ -172,7 +177,6 @@ class HazardType(LocationAware, Exportable, models.Model):
         db_table = 'risks_hazardtype'
         verbose_name_plural = 'Hazards'
 
-
     @property
     def risk_analysis_count(self):
         loc = self.get_location()
@@ -201,7 +205,6 @@ class HazardType(LocationAware, Exportable, models.Model):
     def href(self):
         loc = self.get_location()
         return reverse('risks:hazard_type', args=(loc.code, self.mnemonic,))
-
 
     def get_hazard_details(self):
         """
@@ -302,7 +305,7 @@ class RiskAnalysis(LocationAware, HazardTypeAware, AnalysisTypeAware, Exportable
 
     def get_risk_details(self, dimension=None):
         """
-        Returns dictionary with selected fields for 
+        Returns dictionary with selected fields for
         """
         out = self.export(self.EXPORT_FIELDS_EXTENDED)
         return out
@@ -319,6 +322,7 @@ class RiskAnalysis(LocationAware, HazardTypeAware, AnalysisTypeAware, Exportable
         ht = self.get_hazard_type()
         at = self.get_analysis_type()
         return reverse('risks:data_extraction', args=(loc.code, ht.mnemonic, at.name, self.id,))
+
 
 class AdministrativeDivisionManager(models.Manager):
     """
@@ -359,7 +363,6 @@ class AdministrativeDivision(Exportable, MPTTModel):
     def href(self):
         return reverse('risks:location', args=(self.code,))
 
-        
     def __unicode__(self):
         return u"{0}".format(self.name)
 
@@ -478,6 +481,7 @@ class DymensionInfo(RiskAnalysisAware, Exportable, models.Model):
     def get_axis_values(self):
         risk = self.get_risk_analysis()
         return list(self.riskanalysis_associacion.filter(riskanalysis=risk).values_list('value', flat=True))
+
 
 class RiskAnalysisAdministrativeDivisionAssociation(models.Model):
     """
@@ -684,9 +688,6 @@ class HazardSet(Exportable, models.Model):
                               ('category', 'get_category',),
                               ('country', 'get_country',),)
 
-
-
-
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255, null=False, blank=False)
     date = models.CharField(max_length=20, null=False, blank=False)
@@ -767,6 +768,7 @@ class HazardSet(Exportable, models.Model):
     def get_country(self):
         if self.country:
             self.country.name
+
 
 class FurtherResource(models.Model):
     """
