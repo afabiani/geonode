@@ -23,8 +23,8 @@ npm run compile
 mkdir -p ${ASSETS_DIR}
 mkdir -p ${DIST_DIR}
 
-cp -r assets/* ${ASSETS_DIR}
-cp -r dist/* ${DIST_DIR}
+cp -vvr assets/* ${ASSETS_DIR}
+cp -vvr dist/* ${DIST_DIR}
 
 echo "client code updated. Temp workdir is in" 
 echo $(pwd)
