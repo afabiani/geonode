@@ -131,7 +131,12 @@ is mandatory")
                             )
                         )
 
-                    if is_new_amdiv:
+                    if not is_new_amdiv:
+                        adm_division.name = feat.get('HRname')
+                        adm_division.geom = geom.wkt
+                        adm_division.region = region_obj
+                        adm_division.save()
+                    else:
                         region_obj.administrative_divisions.add(adm_division)
 
                 if adm_level == 1:
@@ -149,7 +154,13 @@ is mandatory")
                             )
                         )
 
-                    if is_new_amdiv:
+                    if not is_new_amdiv:
+                        adm_division.name = feat.get('HRname')
+                        adm_division.geom = geom.wkt
+                        adm_division.region = region_obj
+                        adm_division.parent = adm_division_0
+                        adm_division.save()
+                    else:
                         region_obj.administrative_divisions.add(adm_division)
 
                 if adm_level == 2:
@@ -164,5 +175,11 @@ is mandatory")
                         )
                     )
 
-                    if is_new_amdiv:
+                    if not is_new_amdiv:
+                        adm_division.name = feat.get('HRname')
+                        adm_division.geom = geom.wkt
+                        adm_division.region = region_obj
+                        adm_division.parent = adm_division_1
+                        adm_division.save()
+                    else:
                         region_obj.administrative_divisions.add(adm_division)
