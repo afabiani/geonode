@@ -1,4 +1,3 @@
-/*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
 html {
   font-family: sans-serif;
   -ms-text-size-adjust: 100%;
@@ -176,8 +175,6 @@ td,
 th {
   padding: 0;
 }
-/*@import "../../../node_modules/bootstrap/less/print.less";*/
-/*@import "../../../node_modules/bootstrap/less/glyphicons.less";*/
 * {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -636,7 +633,7 @@ address {
   font-style: normal;
   line-height: 1.42857143;
 }
-/*@import "../../../node_modules/bootstrap/less/code.less";*/
+
 .container {
   margin-right: auto;
   margin-left: auto;
@@ -4679,6 +4676,7 @@ ul.horizontal li {
 }
 .hazard-types-list li.no-data {
   color: #a8a8a8;
+  cursor: auto;
 }
 .hazard-types-list li.no-data a,
 .hazard-types-list li.no-data a:hover,

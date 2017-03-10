@@ -463,9 +463,10 @@ footer:after {
 }
 .analysis-header .nav-tabs > li {
     cursor: pointer;
+    white-space: nowrap;
 }
 .analysis-tab > li  {
-    width: 110px;
+    width: 120px;
     height: 40px;
     border: 1px solid;
     border-radius: 5px 5px 0 0;
@@ -498,8 +499,8 @@ footer:after {
     bottom: -15px;
     width: 0;
     height: 0;
-    border-left: 51px solid transparent;
-    border-right: 51px solid transparent;
+    border-left: 60px solid transparent;
+    border-right: 60px solid transparent;
     border-top: 10px solid;
     -moz-transform: scale(0.999);
 }
