@@ -5,13 +5,9 @@ import logging
 
 from django.conf import settings
 from django.views.generic import TemplateView, View
-from django.core.urlresolvers import reverse
-
 
 from geonode.utils import json_response
-from geonode.contrib.risks.models import (HazardType, AnalysisType,
-                                          AdministrativeDivision, RiskAnalysis,
-                                          DymensionInfo,
+from geonode.contrib.risks.models import (HazardType, AdministrativeDivision,
                                           RiskAnalysisDymensionInfoAssociation)
 
 from geonode.contrib.risks.datasource import GeoserverDataSource
@@ -27,7 +23,6 @@ class FeaturesSource(object):
     AXIS_Y = 'y'
     KWARGS_MAPPING = {'loc': 'adm_code',
                       'ht': 'hazard_type'}
-
 
     def url_kwargs_to_query_params(self, **kwargs):
         out = {}
@@ -76,233 +71,13 @@ class FeaturesSource(object):
 class RiskDataExtractionView(FeaturesSource, TemplateView):
 
     template_name = 'risks/risk_data_extraction_index.html'
-    DEFAULT_LOC = 'AF'
-    NO_VALUE = '-'
-    AXIS_X = 'x'
-    AXIS_Y = 'y'
-    DEFAULTS = {'loc': DEFAULT_LOC, 'ht': NO_VALUE, 'at': NO_VALUE, 'axis': AXIS_X}
-    FEATURE_DEFAULTS = {'adm_code': DEFAULT_LOC, 'hazard_type': NO_VALUE}
-
-    def get_location(self, loc=None):
-        """
-        Returns AdministrativeDivision object for loc code
-        """
-        if self._ommit_value(loc):
-            loc = self.DEFAULT_LOC
-        return AdministrativeDivision.objects.get(code=loc)
-
-    def get_dyminfo(self, **kwargs):
-        """
-
-        """
-        map_classes = {'an': (None, None, 'riskanalysis',)}
-        # a bit of hack:
-        # we use axis as a default value, because we don't know id value from db
-        # but we can get id from url, then we should not check by axis, but by id
-        if kwargs.get('dym'):
-            map_classes['dym'] = (None, None, 'id',)
-        else:
-            map_classes['axis'] = (None, None, 'riskanalysis_associacion__axis',)
-
-        filter_args = self._extract_args_from_request(map_classes, **kwargs)
-        if not filter_args:
-            return None
-
-        return DymensionInfo.objects.filter(**filter_args).distinct().get()
-
-    def get_dymensioninfo_list(self, **kwargs):
-        """
-        Returns DymensionInfo list for given params
-        """
-        map_classes = {'an': (None, None, 'riskanalysis',),
-                       }
-        filter_args = self._extract_args_from_request(map_classes, **kwargs)
-        if not filter_args:
-            return []
-
-        return DymensionInfo.objects.filter(**filter_args).distinct()
-
-    @classmethod
-    def _extract_args_from_request(cls, required_map, optional_map=None, **kwargs):
-        """
-        Extract QuerySet.filter() arguments from provided kwargs from url.
-        Method will use two dictionaries with mapping between url kwargs
-        and fields for queryset. First dictionary is for required params,
-        second is for optional.
-
-        Mapping is in following format:
-
-            url_kwarg: (ModelClass, get_lookup_field, filter_lookup,)
-
-        or
-
-            url_kwarg: (None, None, filter_lookup,)
-
-        where:
-
-        url_kwarg
-            is kwarg from url. This should identify one entity from ModelClass
-
-        ModelClass
-            is class for model, which will be queried for one
-            value only (with .get())
-
-        get_lookup_field
-            lookup field used in ModelClass.get(get_lookup_field=url_kwarg)
-
-        filter_lookup
-            target queryset field lookup used by caller
-
-        if ModelClass is None, no instance lookup is performed, only
-        filter_lookup: url_kwarg mapping is returned
-
-
-        Returns dictionary with lookups to be used in QuerySet.filter():
-
-        >>> kwargs = {'loc': 'A00'} # Afghanistan, from url like /risks/report/A00/.../
-        >>> required = {'loc': (AdministrativeDivision, 'code', 'administrative_division',)}
-        >>> self._extract_args_from_request(required, None, **kwargs) # we skip optional here
-        {'administrative_division': <Afghanistan>}
-        >>> RiskAnalysis.objects.filter(**_)
-
-        """
-        filter_params = {}
-        if required_map:
-            for k, v in kwargs.iteritems():
-                if cls._ommit_value(v):
-                    continue
-                # model class, model class arg name for .get(), filtering kwarg for RiskAnalysis
-                try:
-                    klass, filter_field, filter_arg = required_map[k]
-                except KeyError:
-                    continue
-                if klass is None:
-                    filter_params[filter_arg] = v
-                else:
-                    filter_params[filter_arg] = klass.objects.get(**{filter_field: v})
-
-            # do not return results if we don't have all required params
-            if len(filter_params.keys()) != len(required_map.keys()):
-                log.warning("Returning empty list of analysis. "
-                            "Parsed params: %s are not covering all required keys",
-                            filter_params)
-                return {}
-
-        if optional_map:
-            for k, v in kwargs.iteritems():
-                if cls._ommit_value(v):
-                    continue
-                try:
-                    klass, filter_field, filter_arg = optional_map[k]
-                except KeyError:
-                    continue
-                if klass is None:
-                    filter_params[filter_arg] = v
-                else:
-                    filter_params[filter_arg] = klass.objects.get(**{filter_field: v})
-        return filter_params
-
-    def get_analysis(self, **kwargs):
-        """
-        Returns list of RiskAnalysis objects for given url args.
-        """
-        map_classes = {'loc': (AdministrativeDivision, 'code', 'administrative_divisions'),
-                       'ht': (HazardType, 'mnemonic', 'hazard_type'),
-                       'at': (AnalysisType, 'name', 'analysis_type'),
-                       'an': (None, None, 'id'),
-                       }
-
-        filter_params = self._extract_args_from_request(map_classes, **kwargs)
-        if not filter_params:
-            return
-
-        try:
-            q = RiskAnalysis.objects.get(**filter_params)
-        except Exception, err:
-            pass
-        return q
-
-
-
-    def get_analysis_list(self, **kwargs):
-        """
-        Returns list of RiskAnalysis objects for given url args.
-
-        """
-        map_classes = {'loc': (AdministrativeDivision, 'code', 'administrative_divisions'),
-                       'ht': (HazardType, 'mnemonic', 'hazard_type'),
-                       'at': (AnalysisType, 'name', 'analysis_type'),
-                       #'dym': (DymensionInfo, 'id', 'dymensioninfo',),
-                       }
-
-        filter_params = self._extract_args_from_request(map_classes, **kwargs)
-        if not filter_params:
-            return []
-
-        q = RiskAnalysis.objects.filter(**filter_params)
-        return q
-
-    @classmethod
-    def _ommit_value(cls, val):
-        """
-        Return True if provided val should be considered as no value
-        """
-        return not val or val == cls.NO_VALUE
-
-    def get_context_data(self, *args, **kwargs):
-        out = super(RiskDataExtractionView, self).get_context_data(*args, **kwargs)
-        out['hazard_types'] = HazardType.objects.all()
-        out['analysis_types'] = AnalysisType.objects.all()
-
-        defaults = out['defaults'] = self.DEFAULTS
-
-        # we skip empty values from url
-        filtered_kwargs = dict([(k, v,) for k, v in kwargs.iteritems() if not self._ommit_value(v)])
-
-        # and provide defaults
-        current = defaults.copy()
-        current.update(filtered_kwargs)
-        out['current'] = current
-
-        # we need exact type for analysis id, otherwise comparison will fail in template
-        try:
-            current['an_int'] = int(current['an'])
-        except (KeyError, TypeError, ValueError,):
-            pass
-        try:
-            current['dym_int'] = int(current['dym'])
-        except (KeyError, TypeError, ValueError,):
-            pass
-
-        out['location'] = self.get_location(filtered_kwargs.get('loc'))
-
-        analysis = self.get_analysis(**current)
-        out['risk_analysis_list'] = self.get_analysis_list(**current)
-        if analysis:
-            out['analysis'] = analysis
-            out['dimensions'] = dymlist = self.get_dymensioninfo_list(**current)
-            out['dyminfo'] = dyminfo = self.get_dyminfo(**current)
-            out['dim_name'] = dim_name = self.get_dim_association(analysis, dyminfo)[1]
-
-            current = self.FEATURE_DEFAULTS.copy()
-            current['risk_analysis'] = analysis.name
-            current['hazard_type'] = filtered_kwargs.get('ht')
-            current['adm_code'] = filtered_kwargs.get('loc')
-            # try:
-            #     if dyminfo:
-            #         current['dim{}_value'.format(int(filtered_kwargs['dym']))] = filtered_kwargs['dym']
-            # except (KeyError, TypeError, ValueError,):
-            #     pass
-            out['features'] = self.get_features(analysis, dyminfo, dymlist, **current)
-
-        return out
 
 
 risk_data_extraction_index = RiskDataExtractionView.as_view()
 
 
-
 class LocationSource(object):
+
     def get_location(self, **kwargs):
         try:
             loc = AdministrativeDivision.objects.get(code=kwargs['loc'])
@@ -311,6 +86,7 @@ class LocationSource(object):
         locations = loc.get_parents_chain() + [loc]
         return locations
 
+
 class LocationView(LocationSource, View):
 
     def get(self, request, *args, **kwargs):
@@ -318,8 +94,7 @@ class LocationView(LocationSource, View):
         if not locations:
             return json_response(errors=['Invalid location code'], status=404)
         loc = locations[-1]
-        risk_analysis = loc.riskanalysis_set.all()
-        hazard_types = HazardType.objects.filter(riskanalysis_hazardtype__in=risk_analysis).distinct()
+        hazard_types = HazardType.objects.all()
 
         location_data = {'navItems': [location.export() for location in locations],
                          'overview': [ht.set_location(loc).export() for ht in hazard_types]}
@@ -328,8 +103,8 @@ class LocationView(LocationSource, View):
 
 
 class HazardTypeView(LocationSource, View):
-    """ 
-        loc/AF/ht/EQ/"
+    """
+    loc/AF/ht/EQ/"
 {
  "navItems": [{
   "label": "Afghanistan",
@@ -402,14 +177,12 @@ class HazardTypeView(LocationSource, View):
             atype = atypes.get(name=kwargs['at']).set_location(location).set_hazard_type(hazard_type)
         return atype, atypes,
 
-
     def get(self, request, *args, **kwargs):
         locations = self.get_location(**kwargs)
         if not locations:
             return json_response(errors=['Invalid location code'], status=404)
         loc = locations[-1]
-        risk_analysis = loc.riskanalysis_set.all()
-        hazard_types = HazardType.objects.filter(riskanalysis_hazardtype__in=risk_analysis).distinct()
+        hazard_types = HazardType.objects.all()
 
         hazard_type = self.get_hazard_type(loc, **kwargs)
 
@@ -420,11 +193,10 @@ class HazardTypeView(LocationSource, View):
         if not atype:
             return json_response(errors=['No analysis type available for location/hazard type'], status=404)
 
-        
         out = {'navItems': [location.export() for location in locations],
-                'overview': [ht.set_location(loc).export() for ht in hazard_types],
-                'hazardType': hazard_type.get_hazard_details(),
-                'analysisType': atype.get_analysis_details()}
+               'overview': [ht.set_location(loc).export() for ht in hazard_types],
+               'hazardType': hazard_type.get_hazard_details(),
+               'analysisType': atype.get_analysis_details()}
 
         return json_response(out)
 
@@ -511,9 +283,8 @@ class DataExtractionView(FeaturesSource, HazardTypeView):
         values = []
         _fields = [self.get_dim_association(risk, dimension)] +\
                   [self.get_dim_association(risk, dim) for dim in dimensions if dim.id != dimension.id]
-
         fields = ['{}_value'.format(f[1]) for f in _fields]
-        
+
         for feat in features:
             p = feat['properties']
             line = []
@@ -521,19 +292,16 @@ class DataExtractionView(FeaturesSource, HazardTypeView):
             line.append(p['value'])
             values.append(line)
 
-        out = {'dimensions': [dim.set_risk_analysis(risk).export() for dim in dimensions], 
+        out = {'dimensions': [dim.set_risk_analysis(risk).export() for dim in dimensions],
                'values': values}
 
         return out
 
     def get(self, request, *args, **kwargs):
-        
         locations = self.get_location(**kwargs)
         if not locations:
             return json_response(errors=['Invalid location code'], status=404)
         loc = locations[-1]
-        risk_analysis = loc.riskanalysis_set.all()
-        hazard_types = HazardType.objects.filter(riskanalysis_hazardtype__in=risk_analysis).distinct()
 
         hazard_type = self.get_hazard_type(loc, **kwargs)
 
@@ -543,26 +311,25 @@ class DataExtractionView(FeaturesSource, HazardTypeView):
         (atype, atypes,) = self.get_analysis_type(loc, hazard_type, **kwargs)
         if not atype:
             return json_response(errors=['No analysis type available for location/hazard type'], status=404)
-       
+
         risks = atype.get_risk_analysis_list(id=kwargs['an'])
         if not risks:
             return json_response(errors=['No risk analysis found for given parameters'], status=404)
         risk = risks[0]
-        
+
         out = {'riskAnalysisData': risk.get_risk_details()}
         dymlist = risk.dymension_infos.all().distinct()
         if kwargs.get('dym'):
             dimension = dymlist.get(id=kwargs['dym'])
         else:
             dimension = dymlist.filter(riskanalysis_associacion__axis=self.AXIS_X).distinct().get()
-         
+
         feat_kwargs = self.url_kwargs_to_query_params(**kwargs)
         feat_kwargs['risk_analysis'] = risk.name
         features = self.get_features(risk, dimension, dymlist, **feat_kwargs)
         out['riskAnalysisData']['data'] = self.reformat_features(risk, dimension, dymlist, features['features'])
 
         return json_response(out)
-
 
 
 location_view = LocationView.as_view()
