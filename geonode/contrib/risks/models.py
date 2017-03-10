@@ -339,6 +339,7 @@ class AdministrativeDivision(Exportable, MPTTModel):
     EXPORT_FIELDS = (('label', 'name',),
                      ('href', 'href',),
                      ('geom', 'geom_href',),
+                     ('parent_geom', 'parent_geom_href',),
                      )
     id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=30, null=False, unique=True,
@@ -367,6 +368,11 @@ class AdministrativeDivision(Exportable, MPTTModel):
     @property
     def geom_href(self):
         return reverse('risks-geom:location', args=(self.code,))
+
+    @property
+    def parent_geom_href(self):
+        if self.parent:
+            return self.parent.geom_href;
 
     def __unicode__(self):
         return u"{0}".format(self.name)

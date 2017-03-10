@@ -9,8 +9,43 @@
 
         <script type="text/javascript">
 
+            var ZoomOutControl = L.Control.extend({
+                    options: {
+                            gsource: null,
+                    },
+
+                    initialize: function (options) {
+                    		L.Util.setOptions(this, options);
+                    },
+
+                    onAdd: function(map){
+
+                    
+                        var that = this;
+
+
+                        var onclick = function(evt){
+                            var g = that.options.gsource;
+                            if (g.parent_url!=null){
+                                g.url = g.parent_url;
+                                g.init();
+                            }
+                            return false;
+                        };
+                        var c = L.DomUtil.create('div', 'leaflet-control leaflet-control-zoomout');
+                        $(c).html('<div class="ctl-zoom-out"><a href="#">Zoom out</a></div>');
+                        $(c).find('.ctl-zoom-out a').on('click', onclick);
+                        this._container = c;
+                        return c;
+                    },
+        
+
+                });
+              
+
             var GeoJSONSource = function(initial_url, map){
                 this.url = initial_url;
+                this.parent_url = null;
                 this.map = map;
                 this.layer = null;
                 var _p = $.proxy;
@@ -41,6 +76,7 @@
                     var l = evt.target;
                     var url = l.feature.properties.geom;
                     if (typeof url == 'string' || url instanceof String){
+                        this.parent_url = this.url;
                         this.url = url;
                         this.init();
                     }
@@ -62,6 +98,8 @@
                 var map = L.map(container[0], map_opts);
 
                 _gs = new GeoJSONSource('/risks/geom/loc/AF/', map);
+                var z = new ZoomOutControl({gsource: _gs});
+                z.addTo(map);
             };
 
             $(init_map);
@@ -70,6 +108,16 @@
         <style type="text/css">
             .wrap { padding: 5px}
             #map {width: 100%; height: 100%}
+
+            .leaflet-control-zoomout {
+
+                background-color: #fff;
+                padding: 5px;
+                border-radius: 2px;
+                border: solid 1px #898;
+        
+                
+                }
 
         </style>
 
