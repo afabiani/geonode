@@ -235,7 +235,9 @@ EXTRA_LANG_INFO = {
     },
 }
 
-AUTH_USER_MODEL = os.getenv('AUTH_USER_MODEL', 'people.Profile')
+# AUTH_USER_MODEL = os.getenv('AUTH_USER_MODEL', 'people.Profile')
+AUTH_USER_MODEL = os.getenv('AUTH_USER_MODEL', 'wso2_openid.WSO2Profile')
+AUTH_USER_AUTOCOMPLETE = os.getenv('AUTH_USER_AUTOCOMPLETE', 'WSO2ProfileProfileAutocomplete')
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.SHA1PasswordHasher',
@@ -1914,7 +1916,7 @@ ACCOUNT_CONFIRM_EMAIL_ON_GET = ast.literal_eval(os.environ.get('ACCOUNT_CONFIRM_
 ACCOUNT_EMAIL_REQUIRED = ast.literal_eval(os.environ.get('ACCOUNT_EMAIL_REQUIRED', 'True'))
 ACCOUNT_EMAIL_VERIFICATION = os.environ.get('ACCOUNT_EMAIL_VERIFICATION', 'none')
 
-SOCIALACCOUNT_ADAPTER = 'geonode.people.adapters.SocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'geonode.security.socialaccount.providers.wso2_openid.adapters.WSO2AccountAdapter'
 SOCIALACCOUNT_AUTO_SIGNUP = ast.literal_eval(os.environ.get('SOCIALACCOUNT_AUTO_SIGNUP', 'True'))
 #This will hide or show local registration form in allauth view. True will show form
 SOCIALACCOUNT_WITH_GEONODE_LOCAL_SINGUP = strtobool(os.environ.get('SOCIALACCOUNT_WITH_GEONODE_LOCAL_SINGUP', 'True'))
@@ -1924,6 +1926,10 @@ SOCIALACCOUNT_WITH_GEONODE_LOCAL_SINGUP = strtobool(os.environ.get('SOCIALACCOUN
 #    'allauth.socialaccount.providers.linkedin_oauth2',
 #    'allauth.socialaccount.providers.facebook',
 # )
+
+INSTALLED_APPS += (
+    'geonode.security.socialaccount.providers.wso2_openid',
+)
 
 SOCIALACCOUNT_PROVIDERS = {
     'linkedin_oauth2': {
@@ -1959,11 +1965,54 @@ SOCIALACCOUNT_PROVIDERS = {
             'gender',
         ]
     },
+    'wso2_openid': {
+        'WSO2_URL': 'https://identity.campania.giottolabs.com',
+        'WSO2_NS_URI': 'http://openid.net/srv/ax/1.0',
+        'METHOD': 'oauth2',
+        'SCOPE': [
+            'openid',
+            'email',
+            'profile',
+            'phone',
+            'address'
+        ],
+        'SERVERS': [
+            dict(id='WSO2',
+                 name='WSO2',
+                 openid_url='https://identity.campania.giottolabs.com/openid/',
+                 extra_attributes=[
+                    ('userid', 'http://wso2.org/claims/userid', True),
+                    ('username', 'http://wso2.org/claims/username', True),
+                    ('givenname', 'http://wso2.org/claims/givenname', True),
+                    ('lastname', 'http://wso2.org/claims/lastname', True),
+                    ('email', 'http://wso2.org/claims/email', True),
+                    ('emailaddress', 'http://wso2.org/claims/emailaddress', True),
+                    ('admin', 'http://wso2.org/identity/isAdmin', False),
+                    ('groups', 'http://wso2.org/claims/groups', False),
+                    ('roles', 'http://wso2.org/claims/roles', False),
+                    ('country', 'http://wso2.org/claims/country', False),
+                    ('organization', 'http://wso2.org/claims/organization', False),
+                    # ('nickname', 'http://wso2.org/namePerson/friendly', False),
+                    # ('birthday', 'http://wso2.org/birthDate', False),
+                    # ('gender', 'http://wso2.org/person/gender', False),
+                    ('postal_code', 'http://wso2.org/contact/postalCode/home', False),
+                    ('timezone', 'http://wso2.org/pref/timezone', False),
+                    ('language', 'http://wso2.org/pref/language', False),
+                    # ('name_prefix', 'http://wso2.org/namePerson/prefix', False),
+                    # ('middle_name', 'http://wso2.org/namePerson/middle', False),
+                    # ('name_suffix', 'http://wso2.org/namePerson/suffix', False),
+                    # ('web', 'http://wso2.org/contact/web/default', False),
+                    # ('thumbnail', 'http://wso2.org/media/image/default', False),
+                 ]
+                 )
+        ]
+    }
 }
 
 SOCIALACCOUNT_PROFILE_EXTRACTORS = {
-    "facebook": "geonode.people.profileextractors.FacebookExtractor",
-    "linkedin_oauth2": "geonode.people.profileextractors.LinkedInExtractor",
+    # "facebook": "geonode.people.profileextractors.FacebookExtractor",
+    # "linkedin_oauth2": "geonode.people.profileextractors.LinkedInExtractor",
+    "wso2_openid": "geonode.security.socialaccount.providers.wso2_openid.profileextractors.WSO2ProfileExtractor"
 }
 
 INVITATIONS_ADAPTER = ACCOUNT_ADAPTER
