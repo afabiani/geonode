@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #########################################################################
 #
-# Copyright (C) 2016 OSGeo
+# Copyright (C) 2020 OSGeo
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,16 +21,16 @@ from django.utils.translation import ugettext_noop as _
 from geonode.notifications_helper import NotificationsAppConfigBase
 
 
-class MapsAppConfig(NotificationsAppConfigBase):
-    name = 'geonode.maps'
-    NOTIFICATIONS = (("map_created", _("Map Created"), _("A Map was created"),),
-                     ("map_updated", _("Map Updated"), _("A Map was updated"),),
-                     ("map_approved", _("Map Approved"), _("A Map was approved by a Manager"),),
-                     ("map_published", _("Map Published"), _("A Map was published"),),
-                     ("map_deleted", _("Map Deleted"), _("A Map was deleted"),),
-                     ("map_comment", _("Comment on Map"), _("A Map was commented on"),),
-                     ("map_rated", _("Rating for Map"), _("A rating was given to a Map"),),
+class GeoStoriesAppConfig(NotificationsAppConfigBase):
+    name = 'geonode.geostories'
+    NOTIFICATIONS = (("geostory_created", _("Geostory Created"), _("A Geostory was created"),),
+                     ("geostory_updated", _("Geostory Updated"), _("A Geostory was updated"),),
+                     ("geostory_approved", _("Geostory Approved"), _("A Geostory was approved by a Manager"),),
+                     ("geostory_published", _("Geostory Published"), _("A Geostory was published"),),
+                     ("geostory_deleted", _("Geostory Deleted"), _("A Geostory was deleted"),),
+                     ("geostory_comment", _("Comment on Geostory"), _("A Geostory was commented on"),),
+                     ("geostory_rated", _("Rating for Geostory"), _("A rating was given to a Geostory"),),
                      )
 
 
-default_app_config = 'geonode.maps.MapsAppConfig'
+default_app_config = 'geonode.geostories.GeoStoriesAppConfig'

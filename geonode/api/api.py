@@ -67,6 +67,7 @@ from geonode.security.utils import get_visible_resources
 FILTER_TYPES = {
     'layer': Layer,
     'map': Map,
+    'geostories': Map,
     'document': Document
 }
 

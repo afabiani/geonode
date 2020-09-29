@@ -385,6 +385,7 @@ GEONODE_CORE_APPS = (
     'geonode.layers',
     'geonode.maps',
     'geonode.documents',
+    'geonode.geostories',
     'geonode.security',
     'geonode.catalogue',
     'geonode.catalogue.metadataxsl',

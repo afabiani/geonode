@@ -94,6 +94,12 @@ urlpatterns += [
     # Map views
     url(r'^maps/', include('geonode.maps.urls')),
 
+    # Geostories views
+    url(r'^geostories/', include('geonode.geostories.urls')),
+
+    # Documents views
+    url(r'^documents/', include('geonode.documents.urls')),
+
     # Catalogue views
     url(r'^catalogue/', include('geonode.catalogue.urls')),
 
@@ -140,7 +146,6 @@ urlpatterns += [
         name='moderator_contacted'),
 
     url(r'^groups/', include('geonode.groups.urls')),
-    url(r'^documents/', include('geonode.documents.urls')),
     url(r'^services/', include('geonode.services.urls')),
     url(r'^base/', include('geonode.base.urls')),
 
